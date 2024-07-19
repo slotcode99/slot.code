@@ -2,7 +2,7 @@
 <html lang="hr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Slot Mašina</title>
     <style>
         body {
@@ -12,6 +12,7 @@
             color: #fff;
             margin: 0;
             padding: 0;
+            overflow-x: hidden; /* Sprečava horizontalno pomeranje */
         }
         h1 {
             background-color: #4CAF50;
@@ -67,11 +68,11 @@
             border-radius: 10px;
             padding: 10px;
             margin: 0 10px;
+            display: flex;
+            justify-content: center;
+            gap: 20px; /* Razmak između kredita i eliksira */
         }
-        #credits {
-            font-size: 24px;
-        }
-        #elixirs {
+        #credits, #elixirs {
             font-size: 24px;
         }
         #bet {
@@ -266,7 +267,12 @@
                 }
             }
 
-            return {win: false};
+            if ((slots[0] !== slots[4] && slots[4] !== slots[8] && slots[0] !== slots[8]) || 
+                (slots[2] !== slots[4] && slots[4] !== slots[6] && slots[2] !== slots[6])) {
+                return {win: false, mixedDiagonal: true};
+            }
+
+            return {win: false, mixedDiagonal: false};
         }
 
         function displayNotification(message) {
