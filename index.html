@@ -8,8 +8,8 @@
         body {
             font-family: 'Arial', sans-serif;
             text-align: center;
-            background-color: #333;
-            color: #fff;
+            background-color: #cccccc; /* Početna pozadina je bela */
+            color: #000; /* Tekst je crn na beloj pozadini */
             margin: 0;
             padding: 0;
             overflow-x: hidden; /* Sprečava horizontalno pomeranje */
@@ -82,6 +82,7 @@
             border: none;
             border-radius: 5px;
             margin-top: 10px;
+            background-color:#a7a8a7;
         }
         button {
             padding: 10px 20px;
@@ -130,7 +131,7 @@
         }
         #shop-content {
             background: #fff;
-            color: #000;
+            color: #000; /* Tekst u shop sadržaju je crn */
             padding: 20px;
             border-radius: 10px;
             width: 300px;
@@ -144,6 +145,29 @@
         #shop-content button {
             margin: 10px 5px;
         }
+        .background-option {
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+            margin: 10px;
+            border: 2px solid #444;
+            border-radius: 10px;
+            cursor: pointer;
+            position: relative;
+        }
+        .background-option span {
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .background-option.black { background-color: #333; }
+        .background-option.beach { background-image: url('beach.jpg'); background-size: cover; }
+        .background-option.red { background-color: #8B0000; }
+        .owned span { color: green; }
         @media (max-width: 600px) {
             #slot-machine {
                 width: 100%;
@@ -212,6 +236,18 @@
             <input type="number" id="credits-to-elixirs" placeholder="Enter credits" min="50">
             <button onclick="buyElixirs()">Submit</button>
             <button onclick="closeShop()">Close</button>
+            <div>
+                <h3>Backgrounds</h3>
+                <div class="background-option black" onclick="buyOrEquipBackground('black')">
+                    <span id="black-text">100 credits</span>
+                </div>
+                <div class="background-option beach" onclick="buyOrEquipBackground('beach')">
+                    <span id="beach-text">500 elixirs</span>
+                </div>
+                <div class="background-option red" onclick="buyOrEquipBackground('red')">
+                    <span id="red-text">1000 elixirs</span>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -220,6 +256,17 @@
         let elixirs = 0;
         const maxBet = 500;
         const images = ["majmun.png", "jabuka.png", "banana.png", "lubenica.png"];
+        const backgrounds = {
+            black: "#333",
+            beach: "url('beach.jpg')",
+            red: "#8B0000"
+        };
+        let ownedBackgrounds = {
+            black: false,
+            beach: false,
+            red: false
+        };
+        let currentBackground = 'white'; // Default background color
 
         function updateCredits(amount) {
             credits += amount;
@@ -267,12 +314,7 @@
                 }
             }
 
-            if ((slots[0] !== slots[4] && slots[4] !== slots[8] && slots[0] !== slots[8]) || 
-                (slots[2] !== slots[4] && slots[4] !== slots[6] && slots[2] !== slots[6])) {
-                return {win: false, mixedDiagonal: true};
-            }
-
-            return {win: false, mixedDiagonal: false};
+            return {win: false};
         }
 
         function displayNotification(message) {
@@ -352,6 +394,37 @@
             updateElixirs(elixirsBought);
             displayNotification(`Kupili ste ${elixirsBought} eliksira.`);
             closeShop();
+        }
+
+        function buyOrEquipBackground(type) {
+            if (ownedBackgrounds[type]) {
+                setBackground(type);
+                return;
+            }
+
+            const costs = { black: 100, beach: 500, red: 1000 };
+            const costType = type === "black" ? "credits" : "elixirs";
+            const cost = costs[type];
+
+            if ((costType === "credits" && credits >= cost) || (costType === "elixirs" && elixirs >= cost)) {
+                if (costType === "credits") {
+                    updateCredits(-cost);
+                } else {
+                    updateElixirs(-cost);
+                }
+                ownedBackgrounds[type] = true;
+                document.getElementById(`${type}-text`).innerText = "Owned";
+                document.getElementById(`${type}-text`).style.color = "green";
+                setBackground(type);
+            } else {
+                displayNotification("Nema dovoljno " + costType);
+            }
+        }
+
+        function setBackground(type) {
+            document.body.style.background = backgrounds[type];
+            currentBackground = type;
+            document.body.style.color = (type === 'black' || type === 'beach') ? '#000' : '#000'; // Postavljanje boje teksta za belu pozadinu
         }
 
         for (let i = 1; i <= 9; i++) {
