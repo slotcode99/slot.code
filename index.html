@@ -50,9 +50,23 @@
         #controls {
             margin: 20px;
         }
+        #info {
+            display: flex;
+            justify-content: center;
+            margin: 20px;
+        }
+        .info-box {
+            background-color: #444;
+            border: 2px solid #555;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 0 10px;
+        }
         #credits {
             font-size: 24px;
-            margin-bottom: 10px;
+        }
+        #elixirs {
+            font-size: 24px;
         }
         #bet {
             padding: 10px;
@@ -96,11 +110,45 @@
             justify-content: center;
             align-items: center;
         }
+        #shop-modal {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+        #shop-content {
+            background: #fff;
+            color: #000;
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+            text-align: center;
+        }
+        #shop-content input {
+            padding: 10px;
+            margin: 10px 0;
+            width: calc(100% - 22px);
+        }
+        #shop-content button {
+            margin: 10px 5px;
+        }
     </style>
 </head>
 <body>
     <h1>Slot Mašina</h1>
-    <div id="credits">Your Credits: 100</div>
+    <div id="info">
+        <div class="info-box">
+            <div id="credits">Your Credits: 100</div>
+        </div>
+        <div class="info-box">
+            <div id="elixirs">Elixirs: 0</div>
+        </div>
+    </div>
     <div id="slot-machine">
         <div class="slot" id="slot1"></div>
         <div class="slot" id="slot2"></div>
@@ -118,15 +166,33 @@
     <div id="controls">
         <input type="number" id="bet" placeholder="Enter credits (max 500)" min="1" max="500">
         <button onclick="spin()">Start</button>
+        <button onclick="openShop()">Shop</button>
     </div>
+    
+    <div id="shop-modal">
+        <div id="shop-content">
+            <h2>Shop</h2>
+            <p>50 credits = 5 elixirs</p>
+            <input type="number" id="credits-to-elixirs" placeholder="Enter credits" min="50">
+            <button onclick="buyElixirs()">Submit</button>
+            <button onclick="closeShop()">Close</button>
+        </div>
+    </div>
+    
     <script>
         let credits = 100;
+        let elixirs = 0;
         const maxBet = 500;
         const images = ["majmun.png", "jabuka.png", "banana.png", "lubenica.png"];
 
         function updateCredits(amount) {
             credits += amount;
             document.getElementById('credits').innerText = `Your Credits: ${credits}`;
+        }
+
+        function updateElixirs(amount) {
+            elixirs += amount;
+            document.getElementById('elixirs').innerText = `Elixirs: ${elixirs}`;
         }
 
         function getRandomImage() {
@@ -136,7 +202,6 @@
 
         function getRandomOutcome() {
             const randomValue = Math.random();
-            // 45% šansa za pobedu, 55% za gubitak
             return randomValue < 0.45;
         }
 
@@ -205,25 +270,47 @@
                         document.getElementById(`slot${i}`).style.backgroundImage = `url(${getRandomImage()})`;
                     }
 
-                    const outcomeIsWin = getRandomOutcome();
-                    if (outcomeIsWin) {
-                        const result = checkWinCondition();
-                        if (result.win) {
-                            const winnings = bet * 50;
-                            updateCredits(winnings);
-                            result.winningSlots.forEach(index => document.getElementById(`slot${index + 1}`).classList.add('win'));
-                            displayNotification(`Pobeda! Osvojili ste ${winnings} kredita!`);
-                            setTimeout(() => {
-                                result.winningSlots.forEach(index => document.getElementById(`slot${index + 1}`).classList.remove('win'));
-                            }, 1500);
-                        } else {
-                            displayNotification('Nema pobede.');
-                        }
+                    const result = getRandomOutcome() ? checkWinCondition() : {win: false};
+                    if (result.win) {
+                        const winnings = bet * 50;
+                        updateCredits(winnings);
+                        result.winningSlots.forEach(index => document.getElementById(`slot${index + 1}`).classList.add('win'));
+                        displayNotification(`Pobeda! Osvojili ste ${winnings} kredita!`);
+                        setTimeout(() => {
+                            result.winningSlots.forEach(index => document.getElementById(`slot${index + 1}`).classList.remove('win'));
+                        }, 1500);
                     } else {
-                        displayNotification('Nema pobede.');
+                        displayNotification('Nažalost, izgubili ste.');
                     }
                 }
             }, 100);
+        }
+
+        function openShop() {
+            document.getElementById('shop-modal').style.display = 'flex';
+        }
+
+        function closeShop() {
+            document.getElementById('shop-modal').style.display = 'none';
+        }
+
+        function buyElixirs() {
+            const creditsToElixirs = parseInt(document.getElementById('credits-to-elixirs').value);
+            if (isNaN(creditsToElixirs) || creditsToElixirs % 50 !== 0 || creditsToElixirs < 50) {
+                displayNotification('Unesite validan iznos kredita (mora biti množenje od 50).');
+                return;
+            }
+
+            const elixirsBought = (creditsToElixirs / 50) * 5;
+            if (creditsToElixirs > credits) {
+                displayNotification('Nema dovoljno kredita.');
+                return;
+            }
+
+            updateCredits(-creditsToElixirs);
+            updateElixirs(elixirsBought);
+            displayNotification(`Kupili ste ${elixirsBought} eliksira.`);
+            closeShop();
         }
 
         for (let i = 1; i <= 9; i++) {
