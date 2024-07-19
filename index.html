@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot Mašina</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background-color: #333;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px 0;
+            margin: 0;
+        }
+        #slot-machine {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
+            justify-content: center;
+            align-items: center;
+            margin: 50px auto;
+            width: 330px;
+            border: 10px solid #555;
+            border-radius: 20px;
+            background-color: #222;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .slot {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #444;
+            border-radius: 10px;
+            background-size: cover;
+            transition: background-image 0.1s ease;
+        }
+        .slot.win {
+            animation: blink 0.5s alternate 3;
+        }
+        @keyframes blink {
+            from { border-color: #444; }
+            to { border-color: #FFD700; }
+        }
+        #controls {
+            margin: 20px;
+        }
+        #credits {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        #bet {
+            padding: 10px;
+            font-size: 16px;
+            width: 250px;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #notification {
+            margin: 20px;
+            font-size: 18px;
+            color: #FFD700;
+        }
+        #notification-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+        #notification-box {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #444;
+            border-radius: 10px;
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Slot Mašina</h1>
+    <div id="credits">Your Credits: 100</div>
+    <div id="slot-machine">
+        <div class="slot" id="slot1"></div>
+        <div class="slot" id="slot2"></div>
+        <div class="slot" id="slot3"></div>
+        <div class="slot" id="slot4"></div>
+        <div class="slot" id="slot5"></div>
+        <div class="slot" id="slot6"></div>
+        <div class="slot" id="slot7"></div>
+        <div class="slot" id="slot8"></div>
+        <div class="slot" id="slot9"></div>
+    </div>
+    <div id="notification-container">
+        <div id="notification-box"></div>
+    </div>
+    <div id="controls">
+        <input type="number" id="bet" placeholder="Enter credits (max 500)" min="1" max="500">
+        <button onclick="spin()">Start</button>
+    </div>
+    <script>
+        let credits = 100;
+        const maxBet = 500;
+        const images = ["majmun.png", "jabuka.png", "banana.png", "lubenica.png"];
+
+        function updateCredits(amount) {
+            credits += amount;
+            document.getElementById('credits').innerText = `Your Credits: ${credits}`;
+        }
+
+        function getRandomImage() {
+            const randomIndex = Math.floor(Math.random() * images.length);
+            return images[randomIndex];
+        }
+
+        function getRandomOutcome() {
+            const randomValue = Math.random();
+            // 45% šansa za pobedu, 55% za gubitak
+            return randomValue < 0.45;
+        }
+
+        function checkWinCondition() {
+            const slots = [
+                document.getElementById('slot1').style.backgroundImage,
+                document.getElementById('slot2').style.backgroundImage,
+                document.getElementById('slot3').style.backgroundImage,
+                document.getElementById('slot4').style.backgroundImage,
+                document.getElementById('slot5').style.backgroundImage,
+                document.getElementById('slot6').style.backgroundImage,
+                document.getElementById('slot7').style.backgroundImage,
+                document.getElementById('slot8').style.backgroundImage,
+                document.getElementById('slot9').style.backgroundImage,
+            ];
+
+            const winCombinations = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Horizontalno
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Vertikalno
+                [0, 4, 8], [2, 4, 6]             // Dijagonalno
+            ];
+
+            for (const combination of winCombinations) {
+                const [a, b, c] = combination;
+                if (slots[a] === slots[b] && slots[b] === slots[c]) {
+                    return {win: true, winningSlots: combination};
+                }
+            }
+
+            return {win: false};
+        }
+
+        function displayNotification(message) {
+            const notificationBox = document.getElementById('notification-box');
+            notificationBox.innerText = message;
+            setTimeout(() => {
+                notificationBox.innerText = '';
+            }, 3000);
+        }
+
+        function spin() {
+            const bet = parseInt(document.getElementById('bet').value);
+
+            if (isNaN(bet) || bet < 1 || bet > maxBet) {
+                displayNotification('Unesite validan iznos uloga (1-500).');
+                return;
+            }
+
+            if (bet > credits) {
+                displayNotification('Nema dovoljno kredita.');
+                return;
+            }
+
+            updateCredits(-bet);
+
+            let spins = 30;
+            let interval = setInterval(() => {
+                for (let i = 1; i <= 9; i++) {
+                    document.getElementById(`slot${i}`).style.backgroundImage = `url(${getRandomImage()})`;
+                }
+                spins--;
+                if (spins <= 0) {
+                    clearInterval(interval);
+
+                    for (let i = 1; i <= 9; i++) {
+                        document.getElementById(`slot${i}`).style.backgroundImage = `url(${getRandomImage()})`;
+                    }
+
+                    const outcomeIsWin = getRandomOutcome();
+                    if (outcomeIsWin) {
+                        const result = checkWinCondition();
+                        if (result.win) {
+                            const winnings = bet * 50;
+                            updateCredits(winnings);
+                            result.winningSlots.forEach(index => document.getElementById(`slot${index + 1}`).classList.add('win'));
+                            displayNotification(`Pobeda! Osvojili ste ${winnings} kredita!`);
+                            setTimeout(() => {
+                                result.winningSlots.forEach(index => document.getElementById(`slot${index + 1}`).classList.remove('win'));
+                            }, 1500);
+                        } else {
+                            displayNotification('Nema pobede.');
+                        }
+                    } else {
+                        displayNotification('Nema pobede.');
+                    }
+                }
+            }, 100);
+        }
+
+        for (let i = 1; i <= 9; i++) {
+            document.getElementById(`slot${i}`).style.backgroundImage = `url(${images[i % images.length]})`;
+        }
+    </script>
+</body>
+</html>
