@@ -25,7 +25,7 @@
             grid-gap: 5px;
             justify-content: center;
             align-items: center;
-            margin: 50px auto;
+            margin: 20px auto;
             width: 330px;
             border: 10px solid #555;
             border-radius: 20px;
@@ -54,8 +54,14 @@
             display: flex;
             justify-content: center;
             margin: 20px;
+            flex-direction: column;
         }
-        .info-box {
+        #info-buttons {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        #info-box {
             background-color: #444;
             border: 2px solid #555;
             border-radius: 10px;
@@ -137,18 +143,46 @@
         #shop-content button {
             margin: 10px 5px;
         }
+        @media (max-width: 600px) {
+            #slot-machine {
+                width: 100%;
+                grid-template-columns: repeat(3, 1fr);
+                grid-gap: 2px;
+            }
+            #credits, #elixirs {
+                font-size: 18px;
+            }
+            #bet {
+                width: 100%;
+                font-size: 14px;
+            }
+            #shop-content {
+                width: 90%;
+            }
+            button {
+                font-size: 14px;
+            }
+            #notification-box {
+                width: 80px;
+                height: 80px;
+            }
+        }
     </style>
 </head>
 <body>
     <h1>Slot Mašina</h1>
+
+    <div id="info-buttons">
+        <button onclick="openShop()">Shop</button>
+    </div>
+
     <div id="info">
-        <div class="info-box">
+        <div id="info-box">
             <div id="credits">Your Credits: 100</div>
-        </div>
-        <div class="info-box">
             <div id="elixirs">Elixirs: 0</div>
         </div>
     </div>
+    
     <div id="slot-machine">
         <div class="slot" id="slot1"></div>
         <div class="slot" id="slot2"></div>
@@ -160,13 +194,14 @@
         <div class="slot" id="slot8"></div>
         <div class="slot" id="slot9"></div>
     </div>
+    
     <div id="notification-container">
         <div id="notification-box"></div>
     </div>
+    
     <div id="controls">
         <input type="number" id="bet" placeholder="Enter credits (max 500)" min="1" max="500">
         <button onclick="spin()">Start</button>
-        <button onclick="openShop()">Shop</button>
     </div>
     
     <div id="shop-modal">
@@ -246,7 +281,7 @@
             const bet = parseInt(document.getElementById('bet').value);
 
             if (isNaN(bet) || bet < 1 || bet > maxBet) {
-                displayNotification('Unesite validan iznos uloga (1-500).');
+                displayNotification('Unesite validan iznos kredita (1-500).');
                 return;
             }
 
