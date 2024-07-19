@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Slot Mašina</title>
+    <title>Slot Machine</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
             text-align: center;
-            background-color: #cccccc; /* Početna pozadina je bela */
-            color: #000; /* Tekst je crn na beloj pozadini */
+            background-color: #cccccc;
+            color: #000;
             margin: 0;
             padding: 0;
-            overflow-x: hidden; /* Sprečava horizontalno pomeranje */
+            overflow-x: hidden;
         }
         h1 {
             background-color: #4CAF50;
@@ -39,7 +39,7 @@
             border: 2px solid #444;
             border-radius: 10px;
             background-size: cover;
-            transition: background-image 0.1s ease;
+            transition: background-image 0.05s ease; /* Brža rotacija slika */
         }
         .slot.win {
             animation: blink 0.5s alternate 3;
@@ -70,7 +70,7 @@
             margin: 0 10px;
             display: flex;
             justify-content: center;
-            gap: 20px; /* Razmak između kredita i eliksira */
+            gap: 20px;
         }
         #credits, #elixirs {
             font-size: 24px;
@@ -131,7 +131,7 @@
         }
         #shop-content {
             background: #fff;
-            color: #000; /* Tekst u shop sadržaju je crn */
+            color: #000;
             padding: 20px;
             border-radius: 10px;
             width: 300px;
@@ -196,7 +196,7 @@
     </style>
 </head>
 <body>
-    <h1>Slot Mašina</h1>
+    <h1>Slot Machine</h1>
 
     <div id="info-buttons">
         <button onclick="openShop()">Shop</button>
@@ -226,8 +226,8 @@
     </div>
     
     <div id="controls">
-        <input type="number" id="bet" placeholder="Enter credits (max 500)" min="1" max="500">
-        <button onclick="spin()">Start</button>
+        <input type="number" id="bet" placeholder="Enter credits (max 15,000,000)" min="1" max="15000000">
+        <button onclick="spin()">Bet</button> <!-- Promenjen tekst dugmeta -->
     </div>
     
     <div id="shop-modal">
@@ -255,182 +255,184 @@
     <script>
         let credits = 100;
         let elixirs = 0;
-        const maxBet = 500;
+        const maxBet = 15000000; // Povećano maksimalno betovanje
         const images = ["majmun.png", "jabuka.png", "banana.png", "lubenica.png"];
-        const backgrounds = {
-            black: "#333",
-            beach: "url('beach.jpg')",
-            red: "#8B0000"
+        const slots = Array.from(document.querySelectorAll('.slot'));
+        const creditsDisplay = document.getElementById('credits');
+        const elixirsDisplay = document.getElementById('elixirs');
+        const notificationBox = document.getElementById('notification-box');
+        const shopModal = document.getElementById('shop-modal');
+        const blackText = document.getElementById('black-text');
+        const beachText = document.getElementById('beach-text');
+        const redText = document.getElementById('red-text');
+
+        const backgroundPrices = {
+            black: 100,
+            beach: 500,
+            red: 1000
         };
-        let ownedBackgrounds = {
-            black: false,
-            beach: false,
-            red: false
-        };
-        let currentBackground = 'white'; // Default background color
+        let ownedBackgrounds = [];
+        const currentBackground = localStorage.getItem('currentBackground');
 
-        function updateCredits(amount) {
-            credits += amount;
-            document.getElementById('credits').innerText = `Your Credits: ${credits}`;
+        if (currentBackground) {
+            document.body.style.backgroundImage = currentBackground === 'black' ? '' : `url('${currentBackground}.jpg')`;
+            document.body.style.backgroundColor = currentBackground === 'black' ? '#333' : '';
         }
 
-        function updateElixirs(amount) {
-            elixirs += amount;
-            document.getElementById('elixirs').innerText = `Elixirs: ${elixirs}`;
+        function saveData() {
+            localStorage.setItem('credits', credits);
+            localStorage.setItem('elixirs', elixirs);
+            localStorage.setItem('ownedBackgrounds', JSON.stringify(ownedBackgrounds));
         }
 
-        function getRandomImage() {
-            const randomIndex = Math.floor(Math.random() * images.length);
-            return images[randomIndex];
+        function loadData() {
+            const savedCredits = localStorage.getItem('credits');
+            const savedElixirs = localStorage.getItem('elixirs');
+            const savedBackgrounds = localStorage.getItem('ownedBackgrounds');
+
+            if (savedCredits !== null) credits = parseInt(savedCredits, 10);
+            if (savedElixirs !== null) elixirs = parseInt(savedElixirs, 10);
+            if (savedBackgrounds !== null) ownedBackgrounds = JSON.parse(savedBackgrounds);
+
+            updateDisplay();
         }
 
-        function getRandomOutcome() {
-            const randomValue = Math.random();
-            return randomValue < 0.45;
-        }
-
-        function checkWinCondition() {
-            const slots = [
-                document.getElementById('slot1').style.backgroundImage,
-                document.getElementById('slot2').style.backgroundImage,
-                document.getElementById('slot3').style.backgroundImage,
-                document.getElementById('slot4').style.backgroundImage,
-                document.getElementById('slot5').style.backgroundImage,
-                document.getElementById('slot6').style.backgroundImage,
-                document.getElementById('slot7').style.backgroundImage,
-                document.getElementById('slot8').style.backgroundImage,
-                document.getElementById('slot9').style.backgroundImage,
-            ];
-
-            const winCombinations = [
-                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Horizontalno
-                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Vertikalno
-                [0, 4, 8], [2, 4, 6]             // Dijagonalno
-            ];
-
-            for (const combination of winCombinations) {
-                const [a, b, c] = combination;
-                if (slots[a] === slots[b] && slots[b] === slots[c]) {
-                    return {win: true, winningSlots: combination};
-                }
-            }
-
-            return {win: false};
-        }
-
-        function displayNotification(message) {
-            const notificationBox = document.getElementById('notification-box');
-            notificationBox.innerText = message;
-            setTimeout(() => {
-                notificationBox.innerText = '';
-            }, 3000);
+        function updateDisplay() {
+            creditsDisplay.textContent = `Your Credits: ${credits}`;
+            elixirsDisplay.textContent = `Elixirs: ${elixirs}`;
+            updateBackgroundText();
         }
 
         function spin() {
-            const bet = parseInt(document.getElementById('bet').value);
-
+            const betInput = document.getElementById('bet');
+            let bet = parseInt(betInput.value, 10);
             if (isNaN(bet) || bet < 1 || bet > maxBet) {
-                displayNotification('Unesite validan iznos kredita (1-500).');
+                alert(`Please enter a valid bet amount between 1 and ${maxBet}`);
                 return;
             }
-
             if (bet > credits) {
-                displayNotification('Nema dovoljno kredita.');
+                alert("You don't have enough credits");
                 return;
             }
 
-            updateCredits(-bet);
+            // Animacija slot mašine
+            let animationInterval = setInterval(() => {
+                slots.forEach(slot => {
+                    const randomImage = images[Math.floor(Math.random() * images.length)];
+                    slot.style.backgroundImage = `url('${randomImage}')`;
+                });
+            }, 50);
 
-            let spins = 30;
-            let interval = setInterval(() => {
-                for (let i = 1; i <= 9; i++) {
-                    document.getElementById(`slot${i}`).style.backgroundImage = `url(${getRandomImage()})`;
+            setTimeout(() => {
+                clearInterval(animationInterval);
+
+                slots.forEach(slot => {
+                    const randomImage = images[Math.floor(Math.random() * images.length)];
+                    slot.style.backgroundImage = `url('${randomImage}')`;
+                });
+
+                checkWin(bet);
+            }, 500);
+        }
+
+        function checkWin(bet) {
+            const firstImage = slots[0].style.backgroundImage;
+            const allMatch = slots.every(slot => slot.style.backgroundImage === firstImage);
+
+            if (allMatch) {
+                const prize = bet * 2;
+                credits += prize;
+                notificationBox.textContent = `You win ${prize} credits!`;
+                notificationBox.style.backgroundColor = 'green';
+            } else {
+                const winChance = Math.random();
+                if (winChance < 0.4) { // Promenjen procenat šanse za pobedu
+                    const prize = bet * 2;
+                    credits += prize;
+                    notificationBox.textContent = `You win ${prize} credits!`;
+                    notificationBox.style.backgroundColor = 'green';
+                } else {
+                    credits -= bet;
+                    notificationBox.textContent = 'You lose!';
+                    notificationBox.style.backgroundColor = 'red';
                 }
-                spins--;
-                if (spins <= 0) {
-                    clearInterval(interval);
+            }
 
-                    for (let i = 1; i <= 9; i++) {
-                        document.getElementById(`slot${i}`).style.backgroundImage = `url(${getRandomImage()})`;
-                    }
-
-                    const result = getRandomOutcome() ? checkWinCondition() : {win: false};
-                    if (result.win) {
-                        const winnings = bet * 50;
-                        updateCredits(winnings);
-                        result.winningSlots.forEach(index => document.getElementById(`slot${index + 1}`).classList.add('win'));
-                        displayNotification(`Pobeda! Osvojili ste ${winnings} kredita!`);
-                        setTimeout(() => {
-                            result.winningSlots.forEach(index => document.getElementById(`slot${index + 1}`).classList.remove('win'));
-                        }, 1500);
-                    } else {
-                        displayNotification('Nažalost, izgubili ste.');
-                    }
-                }
-            }, 100);
+            saveData();
+            updateDisplay();
         }
 
         function openShop() {
-            document.getElementById('shop-modal').style.display = 'flex';
+            shopModal.style.display = 'flex';
         }
 
         function closeShop() {
-            document.getElementById('shop-modal').style.display = 'none';
+            shopModal.style.display = 'none';
         }
 
         function buyElixirs() {
-            const creditsToElixirs = parseInt(document.getElementById('credits-to-elixirs').value);
-            if (isNaN(creditsToElixirs) || creditsToElixirs % 50 !== 0 || creditsToElixirs < 50) {
-                displayNotification('Unesite validan iznos kredita (mora biti množenje od 50).');
+            const creditsToElixirs = document.getElementById('credits-to-elixirs');
+            const creditsSpent = parseInt(creditsToElixirs.value, 10);
+
+            if (isNaN(creditsSpent) || creditsSpent < 50) {
+                alert('You need to spend at least 50 credits');
                 return;
             }
 
-            const elixirsBought = (creditsToElixirs / 50) * 5;
-            if (creditsToElixirs > credits) {
-                displayNotification('Nema dovoljno kredita.');
+            if (creditsSpent > credits) {
+                alert("You don't have enough credits");
                 return;
             }
 
-            updateCredits(-creditsToElixirs);
-            updateElixirs(elixirsBought);
-            displayNotification(`Kupili ste ${elixirsBought} eliksira.`);
-            closeShop();
+            const elixirsGained = Math.floor(creditsSpent / 10);
+            credits -= creditsSpent;
+            elixirs += elixirsGained;
+
+            saveData();
+            updateDisplay();
         }
 
         function buyOrEquipBackground(type) {
-            if (ownedBackgrounds[type]) {
-                setBackground(type);
-                return;
-            }
-
-            const costs = { black: 100, beach: 500, red: 1000 };
-            const costType = type === "black" ? "credits" : "elixirs";
-            const cost = costs[type];
-
-            if ((costType === "credits" && credits >= cost) || (costType === "elixirs" && elixirs >= cost)) {
-                if (costType === "credits") {
-                    updateCredits(-cost);
-                } else {
-                    updateElixirs(-cost);
-                }
-                ownedBackgrounds[type] = true;
-                document.getElementById(`${type}-text`).innerText = "Owned";
-                document.getElementById(`${type}-text`).style.color = "green";
-                setBackground(type);
+            if (ownedBackgrounds.includes(type)) {
+                equipBackground(type);
             } else {
-                displayNotification("Nema dovoljno " + costType);
+                const cost = backgroundPrices[type];
+                const currency = type === 'black' ? 'credits' : 'elixirs';
+                if (currency === 'credits' && credits >= cost) {
+                    credits -= cost;
+                    ownedBackgrounds.push(type);
+                    equipBackground(type);
+                } else if (currency === 'elixirs' && elixirs >= cost) {
+                    elixirs -= cost;
+                    ownedBackgrounds.push(type);
+                    equipBackground(type);
+                } else {
+                    alert(`You don't have enough ${currency} to buy this background`);
+                }
+                saveData();
+                updateDisplay();
             }
         }
 
-        function setBackground(type) {
-            document.body.style.background = backgrounds[type];
-            currentBackground = type;
-            document.body.style.color = (type === 'black' || type === 'beach') ? '#000' : '#000'; // Postavljanje boje teksta za belu pozadinu
+        function equipBackground(type) {
+            if (type === 'black') {
+                document.body.style.backgroundColor = '#333';
+                document.body.style.backgroundImage = '';
+            } else {
+                document.body.style.backgroundImage = `url('${type}.jpg')`;
+                document.body.style.backgroundColor = '';
+            }
+            localStorage.setItem('currentBackground', type);
+            updateBackgroundText();
         }
 
-        for (let i = 1; i <= 9; i++) {
-            document.getElementById(`slot${i}`).style.backgroundImage = `url(${images[i % images.length]})`;
+        function updateBackgroundText() {
+            blackText.textContent = ownedBackgrounds.includes('black') ? 'Owned' : '100 credits';
+            beachText.textContent = ownedBackgrounds.includes('beach') ? 'Owned' : '500 elixirs';
+            redText.textContent = ownedBackgrounds.includes('red') ? 'Owned' : '1000 elixirs';
         }
+
+        loadData(); // Učitavanje podataka prilikom učitavanja stranice
     </script>
 </body>
 </html>
