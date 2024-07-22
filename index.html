@@ -226,8 +226,8 @@
     </div>
     
     <div id="controls">
-        <input type="number" id="bet" placeholder="Enter credits (max 15,000,000)" min="1" max="15000000">
-        <button onclick="spin()">Bet</button> <!-- Promenjen tekst dugmeta -->
+        <input type="number" id="bet" placeholder="Enter credits" min="1">
+        <button onclick="spin()">Bet</button>
     </div>
     
     <div id="shop-modal">
@@ -255,7 +255,6 @@
     <script>
         let credits = 100;
         let elixirs = 0;
-        const maxBet = 15000000; // Povećano maksimalno betovanje
         const images = ["majmun.png", "jabuka.png", "banana.png", "lubenica.png"];
         const backgrounds = {
             black: "#333",
@@ -333,8 +332,8 @@
         function spin() {
             const bet = parseInt(document.getElementById('bet').value);
 
-            if (isNaN(bet) || bet < 1 || bet > maxBet) {
-                displayNotification('Unesite validan iznos kredita (1-15,000,000).');
+            if (isNaN(bet) || bet < 1) {
+                displayNotification('Unesite validan iznos kredita.');
                 return;
             }
 
